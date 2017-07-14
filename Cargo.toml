@@ -1,0 +1,6 @@
+[package]
+name = "breaking-the-cage"
+version = "0.1.0"
+authors = ["takahawk <takahawkkun@gmail.com>"]
+
+[dependencies]
