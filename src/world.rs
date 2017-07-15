@@ -48,3 +48,14 @@ impl World {
         self.levels[self.current_level].tiles()
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn creating_new_world() {
+        // World created without panicking
+        World::new();
+    }
+}

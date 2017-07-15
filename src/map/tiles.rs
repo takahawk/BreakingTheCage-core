@@ -27,8 +27,7 @@ pub struct Map(Vec<Vec<Tile>>);
 
 impl Map {
     pub fn new(tiles: Vec<Vec<Tile>>) -> Self {
-        assert!(tiles.is_empty(),
-                "Map can't be empty!");
+        assert!(!tiles.is_empty(), "Map can't be empty!");
         assert!(tiles.iter().all(|row| row.len() == tiles[0].len()),
                 "Rows are not the same size!");
         Map(tiles)
@@ -85,6 +84,7 @@ pub enum TileType {
     Stairs
 }
 
+#[cfg(test)]
 mod tests {
     use super::*;
 
