@@ -67,7 +67,7 @@ impl <'a> Iterator for Tiles<'a> {
 
 #[derive(Clone)]
 pub struct Tile {
-    tile_type: TileType,
+    pub tile_type: TileType,
 }
 
 impl Tile {
