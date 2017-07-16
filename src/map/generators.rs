@@ -52,6 +52,11 @@ impl MapGenerator for SimpleBoxGenerator {
             map[x][height - 1] = Tile::new(TileType::Wall);
         }
 
+        for y in 0..self.height {
+            map[0][y] = Tile::new(TileType::Wall);
+            map[width - 1][y] = Tile::new(TileType::Wall);
+        }
+
         Map::new(map)
     }
 }
