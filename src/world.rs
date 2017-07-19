@@ -21,14 +21,21 @@
     OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
     SOFTWARE.
     */
+use std::collections::HashMap;
+
 use map::tiles::Map;
 use map::tiles::Tiles;
 use map::generators::*;
+use creatures::Creature;
+
+const MAIN_CHARACTER_ID: usize = 0;
 
 /// Main entity holding entire game state with levels, creatures, player character etc.
 pub struct World {
     current_level: usize,
     levels: Vec<Map>,
+    creatures: HashMap<usize, Creature>,
+    next_id: usize,
 }
 
 impl World {
@@ -37,15 +44,30 @@ impl World {
     pub fn new() -> World {
         // current logic is stub, used only for debugging and testing
         let level = SimpleBoxGenerator::new(20, 20).generate();
-        World {
+        let mut world = World {
             current_level: 0,
-            levels: vec![level]
-        }
+            levels: vec![level],
+            creatures: HashMap::new(),
+            next_id: MAIN_CHARACTER_ID,
+        };
+
+        // adding main character
+        world.add_creature(Creature::demon(String::from("Very Evil Demon"), (5, 5), 30, 30));
+        world
     }
 
     /// Access method for iterating through current level tiles
     pub fn current_tiles(&self) -> Tiles {
         self.levels[self.current_level].tiles()
+    }
+
+    pub fn get_creature(&self, id: usize) -> Option<&Creature> {
+        self.creatures.get(&id)
+    }
+
+    fn add_creature(&mut self, creature: Creature) {
+        self.creatures.insert(self.next_id, creature);
+        self.next_id += 1;
     }
 }
 
