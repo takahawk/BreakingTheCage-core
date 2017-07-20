@@ -34,6 +34,6 @@ pub struct Move {
 
 impl Applicable for Move {
     fn apply(&self, &mut world: World) -> Result<(), ()> {
-
+        world.
     }
 }

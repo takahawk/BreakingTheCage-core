@@ -23,6 +23,8 @@
     */
 use super::map::tiles::Map;
 
+use self::Creature::*;
+
 pub struct Points {
     current: u32,
     max: u32,
@@ -31,13 +33,13 @@ pub struct Points {
 pub enum Creature {
     Human {
         name: String,
-        position: (u32, u32),
+        position: Position,
         health: Points,
         mana: Points,
         /*skills: Vec<Skill>*/},
     Demon {
         name: String,
-        position: (u32, u32),
+        position: Position,
         health: Points,
         mana: Points,
         /*humane_skills: Vec<Skill>,*/
@@ -45,13 +47,27 @@ pub enum Creature {
     }
 }
 
+#[derive(Clone, Copy, Debug)]
+pub struct Position {
+    pub level: u32,
+    pub x: u32,
+    pub y: u32,
+}
+
 impl Creature {
-    pub fn demon(name: String, position: (u32, u32), health: u32, mana: u32) -> Creature {
+    pub fn demon(name: String, position: Position, health: u32, mana: u32) -> Creature {
         Creature::Demon {
             name: name,
             position: position,
             health: Points { current: health, max: health },
             mana: Points { current: mana, max: mana },
+        }
+    }
+
+    pub fn position(&self) -> Position {
+        match *self {
+            Demon { position, .. } => position,
+            Human { position, .. } => position,
         }
     }
 }

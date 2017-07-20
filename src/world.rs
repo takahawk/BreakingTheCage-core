@@ -27,6 +27,7 @@ use map::tiles::Map;
 use map::tiles::Tiles;
 use map::generators::*;
 use creatures::Creature;
+use creatures::Position;
 
 const MAIN_CHARACTER_ID: usize = 0;
 
@@ -52,7 +53,12 @@ impl World {
         };
 
         // adding main character
-        world.add_creature(Creature::demon(String::from("Very Evil Demon"), (5, 5), 30, 30));
+        world.add_creature(
+            Creature::demon(
+                String::from("Very Evil Demon"),
+                Position { level: 0, x: 5, y: 5 },
+                30,
+                30));
         world
     }
 
