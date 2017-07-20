@@ -21,8 +21,9 @@
     OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
     SOFTWARE.
     */
-mod actions;
+mod action;
 mod moving;
 
-pub use actions::Action;
-pub use actions::Applicable;
+pub use actions::action::Action;
+pub use actions::moving::Move;
+pub use actions::action::Applicable;

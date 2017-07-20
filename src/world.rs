@@ -67,6 +67,10 @@ impl World {
         self.levels[self.current_level].tiles()
     }
 
+    pub fn level_map(&self, level: usize) -> &Map {
+        &self.levels[level]
+    }
+
     pub fn get_creature(&self, id: usize) -> Option<&Creature> {
         self.creatures.get(&id)
     }

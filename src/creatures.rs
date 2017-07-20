@@ -49,9 +49,9 @@ pub enum Creature {
 
 #[derive(Clone, Copy, Debug)]
 pub struct Position {
-    pub level: u32,
-    pub x: u32,
-    pub y: u32,
+    pub level: usize,
+    pub x: usize,
+    pub y: usize,
 }
 
 impl Creature {

@@ -21,12 +21,13 @@
     OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
     SOFTWARE.
     */
-use super::World;
+use World;
+use actions::Move;
 
-enum Action {
+pub enum Action {
     Move(Move),
 }
 
-trait Applicable {
-    fn apply(&self, &mut world: World) -> Result<(), ()>; // TODO: add concrete error types
+pub trait Applicable {
+    fn apply(&self, world: &mut World) -> Result<(), ()>; // TODO: add concrete error types
 }

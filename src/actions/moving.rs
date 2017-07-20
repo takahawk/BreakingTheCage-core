@@ -21,6 +21,7 @@
     OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
     SOFTWARE.
     */
+use World;
 use super::Applicable;
 
 pub enum Direction {
@@ -33,7 +34,15 @@ pub struct Move {
 }
 
 impl Applicable for Move {
-    fn apply(&self, &mut world: World) -> Result<(), ()> {
-        world.
+    fn apply(&self, world: &mut World) -> Result<(), ()> {
+    }
+}
+
+#[cfg(test)]
+mod tests {
+
+    #[test]
+    fn valid_move() {
+        let mut world = World::new();
     }
 }
