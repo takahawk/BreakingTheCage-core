@@ -35,6 +35,7 @@ pub struct Move {
 
 impl Applicable for Move {
     fn apply(&self, world: &mut World) -> Result<(), ()> {
+        unimplemented!();
     }
 }
 
