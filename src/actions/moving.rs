@@ -41,6 +41,7 @@ impl Applicable for Move {
 
 #[cfg(test)]
 mod tests {
+    use super::*;
 
     #[test]
     fn valid_move() {
