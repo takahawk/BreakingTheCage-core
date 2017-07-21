@@ -22,8 +22,11 @@
     SOFTWARE.
     */
 
+use std::rc::{Weak};
+
 use World;
 use creatures::Creature;
+use world::CreatureRef;
 
 /// Representing tiled map for game
 pub struct Map(Vec<Vec<Tile>>);
@@ -71,15 +74,12 @@ impl <'a> Iterator for Tiles<'a> {
 #[derive(Clone)]
 pub struct Tile {
     pub tile_type: TileType,
-    creature_id: Option<usize>,
+    creature: Option<Weak<CreatureRef>>,
 }
 
 impl Tile {
     pub fn new(tile_type: TileType) -> Tile {
-        return Tile { tile_type, creature_id: None }
-    }
-    pub fn creature<'a>(&self, world: &'a World) -> Option<&'a Creature> {
-        self.creature_id.and_then(|id| world.get_creature(id))
+        return Tile { tile_type, creature: None }
     }
 }
 

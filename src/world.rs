@@ -22,6 +22,8 @@
     SOFTWARE.
     */
 use std::collections::HashMap;
+use std::cell::RefCell;
+use std::rc::{Rc, Weak};
 
 use map::tiles::Map;
 use map::tiles::Tiles;
@@ -31,11 +33,13 @@ use creatures::Position;
 
 const MAIN_CHARACTER_ID: usize = 0;
 
+pub type CreatureRef = RefCell<Creature>;
+
 /// Main entity holding entire game state with levels, creatures, player character etc.
 pub struct World {
     current_level: usize,
     levels: Vec<Map>,
-    creatures: HashMap<usize, Creature>,
+    creatures: HashMap<usize, Rc<CreatureRef>>,
     next_id: usize,
 }
 
@@ -62,21 +66,18 @@ impl World {
         world
     }
 
-    /// Access method for iterating through current level tiles
-    pub fn current_tiles(&self) -> Tiles {
-        self.levels[self.current_level].tiles()
-    }
-
     pub fn level_map(&self, level: usize) -> &Map {
         &self.levels[level]
     }
 
-    pub fn get_creature(&self, id: usize) -> Option<&Creature> {
-        self.creatures.get(&id)
+    /// Returns weak reference to a creature reference
+    /// On the moment of use that creature ref may be dead, so I found it reasonable
+    pub fn get_creature(&self, id: usize) -> Option<Weak<CreatureRef>> {
+        self.creatures.get(&id).map(|creature| Rc::downgrade(creature))
     }
 
     fn add_creature(&mut self, creature: Creature) {
-        self.creatures.insert(self.next_id, creature);
+        self.creatures.insert(self.next_id, Rc::new(RefCell::new(creature)));
         self.next_id += 1;
     }
 }
