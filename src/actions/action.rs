@@ -31,6 +31,7 @@ pub enum Action {
     Move(Move),
 }
 
+#[derive(Debug)]
 pub enum ActionError {
     SubjectIsDead,
     MoveError(MoveError)

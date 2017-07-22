@@ -35,13 +35,24 @@ pub struct Move {
     direction: Direction,
 }
 
+#[derive(Debug)]
 pub enum MoveError {
     OutOfBounds,
     TileIsOccupied,
     TileIsImpassable,
 }
 
+impl Move {
+    pub fn new(creature: Weak<CreatureRef>, direction: Direction) -> Move {
+        Move {
+            creature: creature,
+            direction: direction,
+        }
+    }
+}
+
 impl Applicable for Move {
+
     fn apply(&self, world: &mut World) -> action::Result {
         if let Some(creature) = self.creature.upgrade() {
             let mut creature = creature.borrow_mut();
@@ -88,8 +99,23 @@ impl Applicable for Move {
 mod tests {
     use super::*;
 
+    fn setup() -> (World, Weak<CreatureRef>, Position) {
+        let mut world = World::new();
+        let character = world.main_character();
+        let mut position = match character.upgrade() {
+            Some(ref character) => character.borrow().position(),
+            None => panic!("No main character!")
+        };
+        (world, character, position)
+    }
+
     #[test]
     fn valid_move() {
-        let mut world = World::new();
+        let (mut world, character, pos) = setup();
+        let action = Move::new(character.clone(), Direction::Right);
+        action.apply(&mut world).expect("Valid action return error!");
+        let actual = character.upgrade().map(|a| a.borrow().position()).unwrap();
+        let expected = (pos + Direction::Right).unwrap();
+        assert_eq!(actual, expected);
     }
 }

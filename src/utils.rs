@@ -1,6 +1,7 @@
 use std::ops::Add;
+use world::CreatureRef;
 
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Copy, Debug, PartialEq)]
 pub struct Position {
     pub level: usize,
     pub x: usize,

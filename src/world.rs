@@ -75,6 +75,10 @@ impl World {
         map[position.x][position.y].creature = Some(Rc::downgrade(&creature));
         self.creatures.push(creature);
     }
+
+    pub fn main_character(&self) -> Weak<CreatureRef> {
+        Rc::downgrade(&self.main_character)
+    }
 }
 
 #[cfg(test)]
