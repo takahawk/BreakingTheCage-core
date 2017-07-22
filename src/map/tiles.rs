@@ -28,8 +28,10 @@ use World;
 use creatures::Creature;
 use world::CreatureRef;
 
+use utils::*;
+
 /// Representing tiled map for game
-pub struct Map(Vec<Vec<Tile>>);
+pub struct Map(pub Vec<Vec<Tile>>);
 
 impl Map {
     pub fn new(tiles: Vec<Vec<Tile>>) -> Self {
@@ -37,6 +39,14 @@ impl Map {
         assert!(tiles.iter().all(|row| row.len() == tiles[0].len()),
                 "Rows are not the same size!");
         Map(tiles)
+    }
+
+    pub fn get(&self, x: usize, y: usize) -> &Tile {
+        &self.0[x][y]
+    }
+
+    pub fn get_by_pos(&self, position: Position) -> &Tile {
+        self.get(position.x, position.y)
     }
 
     pub fn tiles(&self) -> Tiles {
@@ -74,12 +84,20 @@ impl <'a> Iterator for Tiles<'a> {
 #[derive(Clone)]
 pub struct Tile {
     pub tile_type: TileType,
-    creature: Option<Weak<CreatureRef>>,
+    pub creature: Option<Weak<CreatureRef>>,
 }
 
 impl Tile {
     pub fn new(tile_type: TileType) -> Tile {
         return Tile { tile_type, creature: None }
+    }
+
+    pub fn is_passable(&self) -> bool {
+        use TileType::*;
+        match self.tile_type {
+            Ground | Stairs | Door { closed: false } => true,
+            _ => false,
+        }
     }
 }
 

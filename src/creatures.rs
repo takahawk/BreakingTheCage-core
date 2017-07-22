@@ -21,7 +21,9 @@
     OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
     SOFTWARE.
     */
-use super::map::tiles::Map;
+
+use utils::*;
+use map::tiles::Map;
 
 use self::Creature::*;
 
@@ -47,13 +49,6 @@ pub enum Creature {
     }
 }
 
-#[derive(Clone, Copy, Debug)]
-pub struct Position {
-    pub level: usize,
-    pub x: usize,
-    pub y: usize,
-}
-
 impl Creature {
     pub fn demon(name: String, position: Position, health: u32, mana: u32) -> Creature {
         Creature::Demon {
@@ -68,6 +63,13 @@ impl Creature {
         match *self {
             Demon { position, .. } => position,
             Human { position, .. } => position,
+        }
+    }
+
+    pub fn set_position(&mut self, new_position: Position) {
+        match *self {
+            Demon { ref mut position, .. } => *position = new_position,
+            Human { ref mut position, .. } => *position = new_position,
         }
     }
 }

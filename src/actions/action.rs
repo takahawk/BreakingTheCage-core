@@ -21,13 +21,27 @@
     OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
     SOFTWARE.
     */
+use std;
 use World;
-use actions::Move;
+use actions::moving::*;
+
+pub type Result = std::result::Result<(), ActionError>;
 
 pub enum Action {
     Move(Move),
 }
 
+pub enum ActionError {
+    SubjectIsDead,
+    MoveError(MoveError)
+}
+
+impl From<MoveError> for ActionError {
+    fn from(error: MoveError) -> Self {
+        ActionError::MoveError(error)
+    }
+}
+
 pub trait Applicable {
-    fn apply(&self, world: &mut World) -> Result<(), ()>; // TODO: add concrete error types
+    fn apply(&self, world: &mut World) -> Result;
 }

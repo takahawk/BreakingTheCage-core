@@ -29,16 +29,17 @@ use map::tiles::Map;
 use map::tiles::Tiles;
 use map::generators::*;
 use creatures::Creature;
-use creatures::Position;
+use utils::*;
 
 const MAIN_CHARACTER_ID: usize = 0;
 
 pub type CreatureRef = RefCell<Creature>;
+pub type MapRef = RefCell<Map>;
 
 /// Main entity holding entire game state with levels, creatures, player character etc.
 pub struct World {
     current_level: usize,
-    levels: Vec<Map>,
+    levels: Vec<MapRef>,
     creatures: HashMap<usize, Rc<CreatureRef>>,
     next_id: usize,
 }
@@ -51,7 +52,7 @@ impl World {
         let level = SimpleBoxGenerator::new(20, 20).generate();
         let mut world = World {
             current_level: 0,
-            levels: vec![level],
+            levels: vec![RefCell::new(level)],
             creatures: HashMap::new(),
             next_id: MAIN_CHARACTER_ID,
         };
@@ -66,7 +67,7 @@ impl World {
         world
     }
 
-    pub fn level_map(&self, level: usize) -> &Map {
+    pub fn get_level(&self, level: usize) -> &MapRef {
         &self.levels[level]
     }
 
