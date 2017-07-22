@@ -38,10 +38,9 @@ pub type MapRef = RefCell<Map>;
 
 /// Main entity holding entire game state with levels, creatures, player character etc.
 pub struct World {
-    current_level: usize,
+    main_character: Rc<CreatureRef>,
     levels: Vec<MapRef>,
-    creatures: HashMap<usize, Rc<CreatureRef>>,
-    next_id: usize,
+    creatures: Vec<Rc<CreatureRef>>,
 }
 
 impl World {
@@ -50,36 +49,23 @@ impl World {
     pub fn new() -> World {
         // current logic is stub, used only for debugging and testing
         let level = SimpleBoxGenerator::new(20, 20).generate();
+
+        let main_character = Rc::new(RefCell::new(Creature::demon(
+            String::from("Very Evil Demon"),
+            Position { level: 0, x: 5, y: 5 },
+            30,
+            30)));
         let mut world = World {
-            current_level: 0,
+            main_character: main_character.clone(),
             levels: vec![RefCell::new(level)],
-            creatures: HashMap::new(),
-            next_id: MAIN_CHARACTER_ID,
+            creatures: vec![main_character],
         };
 
-        // adding main character
-        world.add_creature(
-            Creature::demon(
-                String::from("Very Evil Demon"),
-                Position { level: 0, x: 5, y: 5 },
-                30,
-                30));
         world
     }
 
     pub fn get_level(&self, level: usize) -> &MapRef {
         &self.levels[level]
-    }
-
-    /// Returns weak reference to a creature reference
-    /// On the moment of use that creature ref may be dead, so I found it reasonable
-    pub fn get_creature(&self, id: usize) -> Option<Weak<CreatureRef>> {
-        self.creatures.get(&id).map(|creature| Rc::downgrade(creature))
-    }
-
-    fn add_creature(&mut self, creature: Creature) {
-        self.creatures.insert(self.next_id, Rc::new(RefCell::new(creature)));
-        self.next_id += 1;
     }
 }
 
