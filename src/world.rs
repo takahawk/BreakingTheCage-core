@@ -52,20 +52,28 @@ impl World {
 
         let main_character = Rc::new(RefCell::new(Creature::demon(
             String::from("Very Evil Demon"),
-            Position { level: 0, x: 5, y: 5 },
             30,
-            30)));
+            30,
+            Position { level: 0, x: 5, y: 5 },
+            0)));
         let mut world = World {
             main_character: main_character.clone(),
             levels: vec![RefCell::new(level)],
-            creatures: vec![main_character],
+            creatures: vec![],
         };
-
+        world.add_creature(main_character);
         world
     }
 
     pub fn get_level(&self, level: usize) -> &MapRef {
         &self.levels[level]
+    }
+
+    fn add_creature(&mut self, creature: Rc<CreatureRef>) {
+        let position = creature.borrow().position();
+        let Map(ref mut map) = *self.levels[position.level].borrow_mut();
+        map[position.x][position.y].creature = Some(Rc::downgrade(&creature));
+        self.creatures.push(creature);
     }
 }
 

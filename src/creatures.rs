@@ -21,55 +21,57 @@
     OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
     SOFTWARE.
     */
+use std::cmp;
 
 use utils::*;
 use map::tiles::Map;
 
-use self::Creature::*;
+const MAX_DEMONICITY: u32 = 100;
 
 pub struct Points {
     current: u32,
     max: u32,
 }
 
-pub enum Creature {
-    Human {
-        name: String,
-        position: Position,
-        health: Points,
-        mana: Points,
-        /*skills: Vec<Skill>*/},
-    Demon {
-        name: String,
-        position: Position,
-        health: Points,
-        mana: Points,
-        /*humane_skills: Vec<Skill>,*/
-        /*demon_skills: Vec<Skill>,*/
-    }
+pub struct Creature {
+    name: String,
+    position: Position,
+    health: Points,
+    mana: Points,
+    creature_type: CreatureType,
 }
 
+pub enum CreatureType {
+    Human,
+    Demon { demonicity: Points },
+}
+
+
 impl Creature {
-    pub fn demon(name: String, position: Position, health: u32, mana: u32) -> Creature {
-        Creature::Demon {
+    pub fn demon(name: String,
+                 health: u32,
+                 mana: u32,
+                 position: Position,
+                 initial_demonicity: u32) -> Creature {
+        Creature {
             name: name,
             position: position,
-            health: Points { current: health, max: health },
             mana: Points { current: mana, max: mana },
+            health: Points { current: health, max: health },
+            creature_type: CreatureType::Demon {
+                demonicity: Points {
+                    current: cmp::min(initial_demonicity, MAX_DEMONICITY),
+                    max: MAX_DEMONICITY
+                },
+            },
         }
     }
 
     pub fn position(&self) -> Position {
-        match *self {
-            Demon { position, .. } => position,
-            Human { position, .. } => position,
-        }
+        self.position
     }
 
-    pub fn set_position(&mut self, new_position: Position) {
-        match *self {
-            Demon { ref mut position, .. } => *position = new_position,
-            Human { ref mut position, .. } => *position = new_position,
-        }
+    pub fn set_position(&mut self, position: Position) {
+        self.position = position
     }
 }
