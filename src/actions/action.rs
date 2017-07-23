@@ -51,4 +51,5 @@ pub trait Action {
     fn apply(&self, world: &mut World) -> Result;
     /// Cost of action in time-points, used for scheduling (
     fn cost(&self) -> u32;
+    fn actor(&self) -> Weak<CreatureRef>;
 }

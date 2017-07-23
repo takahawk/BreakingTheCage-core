@@ -103,6 +103,10 @@ impl Action for Move {
             None => 0,
         }
     }
+
+    fn actor(&self) -> Weak<CreatureRef> {
+        self.creature.clone()
+    }
 }
 
 #[cfg(test)]
