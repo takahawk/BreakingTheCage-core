@@ -26,4 +26,3 @@ mod moving;
 
 pub use actions::action::Action;
 pub use actions::moving::Move;
-pub use actions::action::Applicable;

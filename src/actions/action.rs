@@ -22,27 +22,33 @@
     SOFTWARE.
     */
 use std;
+use std::rc::Weak;
+
 use World;
 use actions::moving::*;
+use utils::*;
+use world::*;
 
 pub type Result = std::result::Result<(), ActionError>;
 
-pub enum Action {
-    Move(Move),
-}
-
+/// Represents nerror that prevented action to be commited
 #[derive(Debug)]
 pub enum ActionError {
+    /// The [`Creature`] which was supposed to take action is dead (no more reference to it exists
+    /// in the [`World`])
     SubjectIsDead,
-    MoveError(MoveError)
+    /// Out of bounds (of [`Map`]), if position is None - it's not exist at all (for example it is negative
+    /// and can't be represented by usize)
+    OutOfBounds { position: Option<Position>, width: usize, height: usize},
+    /// [`Tile`] is occupied by some [`Creature`]
+    TileIsOccupied(Weak<CreatureRef>),
+    /// [`Tile`] is impassable by it's nature
+    TileIsImpassable(Position),
 }
 
-impl From<MoveError> for ActionError {
-    fn from(error: MoveError) -> Self {
-        ActionError::MoveError(error)
-    }
-}
-
-pub trait Applicable {
+/// Abstracts the action to be commited in the [`World`]
+pub trait Action {
     fn apply(&self, world: &mut World) -> Result;
+    /// Cost of action in time-points, used for scheduling (
+    fn cost(&self) -> u32;
 }

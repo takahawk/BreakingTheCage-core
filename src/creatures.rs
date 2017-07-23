@@ -28,11 +28,13 @@ use map::tiles::Map;
 
 const MAX_DEMONICITY: u32 = 100;
 
+#[derive(Debug)]
 pub struct Points {
     current: u32,
     max: u32,
 }
 
+#[derive(Debug)]
 pub struct Creature {
     name: String,
     position: Position,
@@ -41,6 +43,7 @@ pub struct Creature {
     creature_type: CreatureType,
 }
 
+#[derive(Debug)]
 pub enum CreatureType {
     Human,
     Demon { demonicity: Points },

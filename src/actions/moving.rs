@@ -30,16 +30,10 @@ use creatures::*;
 use world::*;
 use map::tiles::*;
 
+/// Represents atomic motion of a creature on the map
 pub struct Move {
     creature: Weak<CreatureRef>,
     direction: Direction,
-}
-
-#[derive(Debug)]
-pub enum MoveError {
-    OutOfBounds,
-    TileIsOccupied,
-    TileIsImpassable,
 }
 
 impl Move {
@@ -51,16 +45,25 @@ impl Move {
     }
 }
 
-impl Applicable for Move {
+impl Action for Move {
 
     fn apply(&self, world: &mut World) -> action::Result {
         if let Some(creature) = self.creature.upgrade() {
             let mut creature = creature.borrow_mut();
             let Map(ref mut map) = *world.get_level(creature.position().level).borrow_mut();
-            let new_pos = (creature.position() + self.direction).ok_or(MoveError::OutOfBounds)?;
+            let new_pos = (creature.position() + self.direction)
+                .ok_or(ActionError::OutOfBounds {
+                    position: None,
+                    width: map.len(),
+                    height: map[0].len(),
+                })?;
 
             if map.len() <= new_pos.x || map[0].len() <= new_pos.y {
-                return Err(ActionError::MoveError(MoveError::OutOfBounds))
+                return Err(ActionError::OutOfBounds {
+                    position: Some(new_pos),
+                    width: map.len(),
+                    height: map[0].len(),
+                })
             }
 
 
@@ -69,12 +72,12 @@ impl Applicable for Move {
                 // first: set creature as current to new position
                 let ref mut tile = map[new_pos.x][new_pos.y];
 
-                if let Some(_) = tile.creature {
-                    return Err(ActionError::MoveError(MoveError::TileIsOccupied))
+                if let Some(ref creature) = tile.creature {
+                    return Err(ActionError::TileIsOccupied(creature.clone())) // weak ref
                 }
 
                 if !tile.is_passable() {
-                    return Err(ActionError::MoveError(MoveError::TileIsImpassable))
+                    return Err(ActionError::TileIsImpassable(new_pos))
                 }
                 tile.creature = Some(self.creature.clone()); // weak ref
             }
@@ -91,6 +94,13 @@ impl Applicable for Move {
             Ok(())
         } else {
             Err(ActionError::SubjectIsDead)
+        }
+    }
+
+    fn cost(&self) -> u32 {
+        match self.creature.upgrade() {
+            Some(creature) => 100, // TODO: replace hardcode with more creature-specific calculation
+            None => 0,
         }
     }
 }
