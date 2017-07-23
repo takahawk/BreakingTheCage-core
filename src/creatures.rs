@@ -48,7 +48,7 @@ pub enum CreatureType {
 
 
 impl Creature {
-    pub fn demon(name: String,
+    pub(crate) fn demon(name: String,
                  health: u32,
                  mana: u32,
                  position: Position,
@@ -71,7 +71,7 @@ impl Creature {
         self.position
     }
 
-    pub fn set_position(&mut self, position: Position) {
+    pub(crate) fn set_position(&mut self, position: Position) {
         self.position = position
     }
 }

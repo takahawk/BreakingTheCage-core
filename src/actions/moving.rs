@@ -43,7 +43,7 @@ pub enum MoveError {
 }
 
 impl Move {
-    pub fn new(creature: Weak<CreatureRef>, direction: Direction) -> Move {
+    pub(crate) fn new(creature: Weak<CreatureRef>, direction: Direction) -> Move {
         Move {
             creature: creature,
             direction: direction,
