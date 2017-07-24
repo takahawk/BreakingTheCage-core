@@ -1,4 +1,5 @@
 use std::ops::Add;
+use std::rc::{Rc, Weak};
 use world::CreatureRef;
 
 #[derive(Clone, Copy, Debug, PartialEq)]
@@ -37,3 +38,45 @@ impl Add<Direction> for Position {
     }
 
 }
+
+/// Returns true if weak references points to the same data
+/// and false if not or either points to already deallocated data
+fn identical<T>(first: Weak<T>, second: Weak<T>) -> bool {
+    if let (Some(first), Some(second)) = (first.upgrade(), second.upgrade()) {
+        (first.as_ref() as *const _) == (second.as_ref() as *const _)
+    } else {
+        false
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn weak_refs_identical() {
+        let a = Rc::new(5);
+        let ref1 = Rc::downgrade(&a);
+        let ref2 = Rc::downgrade(&a);
+        assert!(identical(ref1, ref2));
+    }
+
+    #[test]
+    fn weak_refs_not_identical() {
+        let a = Rc::new(5);
+        let b = Rc::new(5);
+        let ref1 = Rc::downgrade(&a);
+        let ref2 = Rc::downgrade(&b);
+        assert!(!identical(ref1, ref2));
+    }
+
+    #[test]
+    fn weak_refs_deallocated() {
+        let a = Rc::new(5);
+        let ref1 = Rc::downgrade(&a);
+        let ref2 = Rc::downgrade(&a);
+        drop(a);
+        assert!(!identical(ref1, ref2));
+    }
+}
+
