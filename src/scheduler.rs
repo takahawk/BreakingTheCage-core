@@ -20,7 +20,7 @@
     LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
     OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
     SOFTWARE.
-    */
+ */
 use std;
 use std::collections::BinaryHeap;
 use std::cmp::Ordering;
@@ -32,12 +32,10 @@ use actions::Action;
 type Result = std::result::Result<(), SchedulerError>;
 
 /// Entry with creature and next action to be commited
-struct ActionEntry {
-    actor: Weak<CreatureRef>,
-    action: Option<Box<Action>>,
-}
+struct ActionEntry(Box<Action>);
 
 pub(crate) struct Scheduler {
+    creatures_without_action: Vec<Weak<CreatureRef>>,
     queue: BinaryHeap<ActionEntry>,
 }
 
@@ -48,27 +46,13 @@ enum SchedulerError {
 
 impl Ord for ActionEntry {
     fn cmp(&self, other: &ActionEntry) -> Ordering {
-        // all entries without an assigned action must be in the beginning
-        // of the queue, rest must be sorted by cost descendingly
-        match (&self.action, &other.action) {
-            (&None, _) => Ordering::Greater,
-            (_, &None) => Ordering::Less,
-            (&Some(ref this_action), &Some(ref that_action)) => {
-                that_action.cost().cmp(&that_action.cost())
-            }
-        }
+        self.0.cost().cmp(&other.0.cost())
     }
 }
 
 impl PartialOrd for ActionEntry {
     fn partial_cmp(&self, other: &ActionEntry) -> Option<Ordering> {
-        Some(match (&self.action, &other.action) {
-            (&None, _) => Ordering::Greater,
-            (_, &None) => Ordering::Less,
-            (&Some(ref this_action), &Some(ref that_action)) => {
-                that_action.cost().cmp(&that_action.cost())
-            }
-        })
+        Some(self.0.cost().cmp(&other.0.cost()))
     }
 }
 
@@ -76,13 +60,7 @@ impl Eq for ActionEntry {}
 
 impl PartialEq for ActionEntry {
     fn eq(&self, other: &ActionEntry) -> bool {
-        match (&self.action, &other.action) {
-            (&None, &None) => true,
-            (&Some(ref this_action), &Some(ref that_action)) => {
-                this_action.cost() == that_action.cost()
-            },
-            _ => false
-        }
+        self.0.cost() == other.0.cost()
     }
 }
 
