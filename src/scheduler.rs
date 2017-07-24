@@ -28,16 +28,13 @@ use std::rc::Weak;
 
 use world::*;
 use actions::Action;
-use self::ActionEntry::*;
 
 type Result = std::result::Result<(), SchedulerError>;
 
 /// Entry with creature and next action to be commited
-enum ActionEntry {
-    /// Creature without assigned action. Action must be assigned in order for scheduler can continue
-    CreatureWithoutAction(Weak<CreatureRef>),
-    /// Action to be commited
-    Action(Box<Action>)
+struct ActionEntry {
+    actor: Weak<CreatureRef>,
+    action: Option<Box<Action>>,
 }
 
 pub(crate) struct Scheduler {
@@ -49,23 +46,14 @@ enum SchedulerError {
     ActorIsDead,
 }
 
-impl ActionEntry {
-    fn is_creature_without_action(&self) -> bool {
-        match self {
-            &CreatureWithoutAction(_) => true,
-            _ => false
-        }
-    }
-}
-
 impl Ord for ActionEntry {
     fn cmp(&self, other: &ActionEntry) -> Ordering {
         // all entries without an assigned action must be in the beginning
         // of the queue, rest must be sorted by cost descendingly
-        match (self, other) {
-            (&CreatureWithoutAction(_), _) => Ordering::Greater,
-            (_, &CreatureWithoutAction(_)) => Ordering::Less,
-            (&Action(ref this_action), &Action(ref that_action)) => {
+        match (&self.action, &other.action) {
+            (&None, _) => Ordering::Greater,
+            (_, &None) => Ordering::Less,
+            (&Some(ref this_action), &Some(ref that_action)) => {
                 that_action.cost().cmp(&that_action.cost())
             }
         }
@@ -74,10 +62,10 @@ impl Ord for ActionEntry {
 
 impl PartialOrd for ActionEntry {
     fn partial_cmp(&self, other: &ActionEntry) -> Option<Ordering> {
-        Some(match (self, other) {
-            (&CreatureWithoutAction(_), _) => Ordering::Greater,
-            (_, &CreatureWithoutAction(_)) => Ordering::Less,
-            (&Action(ref this_action), &Action(ref that_action)) => {
+        Some(match (&self.action, &other.action) {
+            (&None, _) => Ordering::Greater,
+            (_, &None) => Ordering::Less,
+            (&Some(ref this_action), &Some(ref that_action)) => {
                 that_action.cost().cmp(&that_action.cost())
             }
         })
@@ -88,9 +76,9 @@ impl Eq for ActionEntry {}
 
 impl PartialEq for ActionEntry {
     fn eq(&self, other: &ActionEntry) -> bool {
-        match (self, other) {
-            (&CreatureWithoutAction(_), &CreatureWithoutAction(_)) => true,
-            (&Action(ref this_action), &Action(ref that_action)) => {
+        match (&self.action, &other.action) {
+            (&None, &None) => true,
+            (&Some(ref this_action), &Some(ref that_action)) => {
                 this_action.cost() == that_action.cost()
             },
             _ => false
@@ -99,6 +87,8 @@ impl PartialEq for ActionEntry {
 }
 
 impl Scheduler {
+
+    /// Adds action to schedulers priority queue
     fn post_action(&mut self, action: Box<Action>) {
         unimplemented!()
     }
@@ -107,3 +97,7 @@ impl Scheduler {
         unimplemented!()
     }
 }
+
+
+
+
