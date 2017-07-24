@@ -41,7 +41,7 @@ impl Add<Direction> for Position {
 
 /// Returns true if weak references points to the same data
 /// and false if not or either points to already deallocated data
-fn identical<T>(first: &Weak<T>, second: &Weak<T>) -> bool {
+pub(crate) fn identical<T>(first: &Weak<T>, second: &Weak<T>) -> bool {
     if let (Some(first), Some(second)) = (first.upgrade(), second.upgrade()) {
         (first.as_ref() as *const _) == (second.as_ref() as *const _)
     } else {

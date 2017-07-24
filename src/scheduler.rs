@@ -27,6 +27,7 @@ use std::cmp::Ordering;
 use std::rc::Weak;
 
 use world::*;
+use utils::*;
 use actions::Action;
 
 type Result = std::result::Result<(), SchedulerError>;
@@ -68,7 +69,14 @@ impl Scheduler {
 
     /// Adds action to schedulers priority queue
     fn post_action(&mut self, action: Box<Action>) {
-        unimplemented!()
+        debug_assert!(!self.queue.iter()
+                      .any(|&ActionEntry(ref entry)| identical(entry.actor(), action.actor())));
+        if let Some(index) = self.creatures_without_action.iter()
+            .position(|creature| identical(action.actor(), creature)) {
+                self.creatures_without_action.swap_remove(index);
+            }
+
+        self.queue.push(ActionEntry(action));
     }
 
     fn do_next() -> self::Result {
