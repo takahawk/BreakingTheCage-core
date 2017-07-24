@@ -22,7 +22,6 @@
     SOFTWARE.
     */
 use std::cmp;
-
 use utils::*;
 use map::tiles::Map;
 

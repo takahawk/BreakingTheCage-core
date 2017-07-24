@@ -30,6 +30,7 @@ use world::*;
 use utils::*;
 use actions::Action;
 
+use self::SchedulerError::*;
 type Result = std::result::Result<(), SchedulerError>;
 
 /// Entry with creature and next action to be commited
@@ -40,9 +41,10 @@ pub(crate) struct Scheduler {
     queue: BinaryHeap<ActionEntry>,
 }
 
-enum SchedulerError {
+pub(crate) enum SchedulerError {
     ActionNotAssigned(Weak<CreatureRef>),
     ActorIsDead,
+    QueueIsEmpty,
 }
 
 impl Ord for ActionEntry {
@@ -68,7 +70,7 @@ impl PartialEq for ActionEntry {
 impl Scheduler {
 
     /// Adds action to schedulers priority queue
-    fn post_action(&mut self, action: Box<Action>) {
+    pub(crate) fn post_action(&mut self, action: Box<Action>) {
         debug_assert!(!self.queue.iter()
                       .any(|&ActionEntry(ref entry)| identical(entry.actor(), action.actor())));
         if let Some(index) = self.creatures_without_action.iter()
@@ -79,8 +81,27 @@ impl Scheduler {
         self.queue.push(ActionEntry(action));
     }
 
-    fn do_next() -> self::Result {
-        unimplemented!()
+    /// Performs the next action in the queue
+    /// If actor is dead or not action assigned for creature returns corresponding
+    /// error
+    pub(crate) fn do_next(&mut self, world: &mut World) -> self::Result {
+        while self.creatures_without_action.last()
+            .map(|rf| rf.upgrade().is_none())
+            .unwrap_or(false) {
+                self.creatures_without_action.pop();
+            }
+
+        if self.creatures_without_action.len() != 0 {
+            return Err(ActionNotAssigned(self.creatures_without_action[0].clone()))
+        }
+
+        let ActionEntry(action) = self.queue.pop().ok_or(QueueIsEmpty)?;
+        if action.actor().upgrade().is_none() {
+            return Err(ActorIsDead);
+        }
+        
+        action.apply(world);
+        Ok(())
     }
 }
 
