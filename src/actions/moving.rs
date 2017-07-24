@@ -104,8 +104,8 @@ impl Action for Move {
         }
     }
 
-    fn actor(&self) -> Weak<CreatureRef> {
-        self.creature.clone()
+    fn actor(&self) -> &Weak<CreatureRef> {
+        &self.creature
     }
 }
 
