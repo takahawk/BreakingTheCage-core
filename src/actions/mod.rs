@@ -21,7 +21,7 @@
     OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
     SOFTWARE.
     */
-mod action;
+pub(crate) mod action;
 mod moving;
 
 pub use actions::action::Action;

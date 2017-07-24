@@ -29,6 +29,7 @@ use std::rc::Weak;
 use world::*;
 use utils::*;
 use actions::Action;
+use actions::action;
 
 use self::SchedulerError::*;
 type Result = std::result::Result<(), SchedulerError>;
@@ -69,6 +70,13 @@ impl PartialEq for ActionEntry {
 
 impl Scheduler {
 
+    pub(crate) fn new() -> Scheduler {
+        Scheduler {
+            creatures_without_action: vec![],
+            queue: BinaryHeap::new(),
+        }
+    }
+
     /// Adds action to schedulers priority queue
     pub(crate) fn post_action(&mut self, action: Box<Action>) {
         debug_assert!(!self.queue.iter()
@@ -99,11 +107,38 @@ impl Scheduler {
         if action.actor().upgrade().is_none() {
             return Err(ActorIsDead);
         }
-        
+
         action.apply(world);
+        self.creatures_without_action.push(action.actor().clone());
+
         Ok(())
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    struct MockAction {
+        actor: Weak<CreatureRef>,
+        cost: u32,
+    }
+
+    impl Action for MockAction {
+        fn apply(&self, world: &mut World) -> action::Result {
+            Ok(())
+        }
+
+        fn cost(&self) -> u32 {
+            self.cost
+        }
+
+        fn actor(&self) -> &Weak<CreatureRef> {
+            &self.actor
+        }
+    }
+}
+
 
 
 
