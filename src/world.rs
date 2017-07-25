@@ -28,6 +28,7 @@ use map::tiles::Map;
 use map::generators::*;
 use creatures::Creature;
 use utils::*;
+use scheduler::Scheduler;
 
 pub type CreatureRef = RefCell<Creature>;
 pub type MapRef = RefCell<Map>;
@@ -37,6 +38,7 @@ pub struct World {
     main_character: Rc<CreatureRef>,
     levels: Vec<MapRef>,
     creatures: Vec<Rc<CreatureRef>>,
+    scheduler: Scheduler,
 }
 
 impl World {
@@ -56,6 +58,7 @@ impl World {
             main_character: main_character.clone(),
             levels: vec![RefCell::new(level)],
             creatures: vec![],
+            scheduler: Scheduler::new()
         };
         world.add_creature(main_character);
         world
@@ -65,15 +68,22 @@ impl World {
         &self.levels[level]
     }
 
+    pub fn main_character(&self) -> Weak<CreatureRef> {
+        Rc::downgrade(&self.main_character)
+    }
+
+    pub fn turn(&mut self) {
+        // TODO: stub, need to return some info about
+        //       action (or, probably result)
+        //       And do multiple actions until main character not next
+        unimplemented!();
+    }
+
     fn add_creature(&mut self, creature: Rc<CreatureRef>) {
         let position = creature.borrow().position();
         let Map(ref mut map) = *self.levels[position.level].borrow_mut();
         map[position.x][position.y].creature = Some(Rc::downgrade(&creature));
         self.creatures.push(creature);
-    }
-
-    pub fn main_character(&self) -> Weak<CreatureRef> {
-        Rc::downgrade(&self.main_character)
     }
 }
 
