@@ -28,7 +28,8 @@ use std::rc::Weak;
 
 use world::*;
 use utils::*;
-use actions::Action;
+use actions::*;
+use actions::action::*;
 
 use self::SchedulerError::*;
 type Result = std::result::Result<(), SchedulerError>;
@@ -45,6 +46,13 @@ pub(crate) enum SchedulerError {
     ActionNotAssigned(Weak<CreatureRef>),
     ActorIsDead,
     QueueIsEmpty,
+    ActionError(ActionError),
+}
+
+impl From<ActionError> for SchedulerError {
+    fn from(e: ActionError) -> SchedulerError {
+        ActionError(e)
+    }
 }
 
 impl Ord for ActionEntry {
@@ -107,7 +115,7 @@ impl Scheduler {
             return Err(ActorIsDead);
         }
 
-        action.apply(world);
+        action.apply(world)?; // propagate action error to caller
         self.creatures_without_action.push(action.actor().clone());
 
         Ok(())
