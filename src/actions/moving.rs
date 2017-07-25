@@ -26,7 +26,6 @@ use std::rc::Weak;
 use utils::*;
 use actions::action;
 use actions::action::*;
-use creatures::*;
 use world::*;
 use map::tiles::*;
 
@@ -99,7 +98,7 @@ impl Action for Move {
 
     fn cost(&self) -> u32 {
         match self.creature.upgrade() {
-            Some(creature) => 100, // TODO: replace hardcode with more creature-specific calculation
+            Some(_) => 100, // TODO: replace hardcode with more creature-specific calculation
             None => 0,
         }
     }

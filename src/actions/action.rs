@@ -25,7 +25,6 @@ use std;
 use std::rc::Weak;
 
 use World;
-use actions::moving::*;
 use utils::*;
 use world::*;
 

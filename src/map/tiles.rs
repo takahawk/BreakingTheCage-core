@@ -24,8 +24,6 @@
 
 use std::rc::{Weak};
 
-use World;
-use creatures::Creature;
 use world::CreatureRef;
 
 use utils::*;

@@ -1,6 +1,5 @@
 use std::ops::Add;
-use std::rc::{Rc, Weak};
-use world::CreatureRef;
+use std::rc::Weak;
 
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub struct Position {

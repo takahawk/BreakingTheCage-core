@@ -21,17 +21,13 @@
     OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
     SOFTWARE.
     */
-use std::collections::HashMap;
 use std::cell::RefCell;
 use std::rc::{Rc, Weak};
 
 use map::tiles::Map;
-use map::tiles::Tiles;
 use map::generators::*;
 use creatures::Creature;
 use utils::*;
-
-const MAIN_CHARACTER_ID: usize = 0;
 
 pub type CreatureRef = RefCell<Creature>;
 pub type MapRef = RefCell<Map>;

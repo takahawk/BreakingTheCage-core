@@ -29,7 +29,6 @@ use std::rc::Weak;
 use world::*;
 use utils::*;
 use actions::Action;
-use actions::action;
 
 use self::SchedulerError::*;
 type Result = std::result::Result<(), SchedulerError>;

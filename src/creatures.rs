@@ -23,7 +23,6 @@
     */
 use std::cmp;
 use utils::*;
-use map::tiles::Map;
 
 const MAX_DEMONICITY: u32 = 100;
 
