@@ -29,9 +29,7 @@ use std::rc::Weak;
 use world::*;
 use utils::*;
 use actions::*;
-use actions::action::*;
-
-type Result = std::result::Result<(), SchedulerError>;
+use actions::action::Action;
 
 /// Entry with creature and next action to be commited
 struct ActionEntry(Box<Action>);
@@ -45,13 +43,6 @@ pub(crate) enum SchedulerError {
     ActionNotAssigned(Weak<CreatureRef>),
     ActorIsDead,
     QueueIsEmpty,
-    ActionError(ActionError),
-}
-
-impl From<ActionError> for SchedulerError {
-    fn from(e: ActionError) -> SchedulerError {
-        SchedulerError::ActionError(e)
-    }
 }
 
 impl Ord for ActionEntry {
@@ -95,10 +86,8 @@ impl Scheduler {
         self.queue.push(ActionEntry(action));
     }
 
-    /// Performs the next action in the queue
-    /// If actor is dead or not action assigned for creature returns corresponding
-    /// error
-    pub(crate) fn do_next(&mut self, world: &mut World) -> self::Result {
+    /// Returns next action scheduled to apply
+    pub(crate) fn pop_next_action(&mut self) -> Result<Box<Action>, SchedulerError> {
         while self.creatures_without_action.last()
             .map(|rf| rf.upgrade().is_none())
             .unwrap_or(false) {
@@ -109,15 +98,13 @@ impl Scheduler {
             return Err(SchedulerError::ActionNotAssigned(self.creatures_without_action[0].clone()))
         }
 
-        let ActionEntry(action) = self.queue.pop().ok_or(SchedulerError::QueueIsEmpty)?;
-        if action.actor().upgrade().is_none() {
-            return Err(SchedulerError::ActorIsDead);
+        return match self.queue.pop() {
+            Some(ActionEntry(action)) => {
+                self.creatures_without_action.push(action.actor().clone());
+                Ok(action)
+            },
+            None => Err(SchedulerError::QueueIsEmpty),
         }
-
-        action.apply(world)?; // propagate action error to caller
-        self.creatures_without_action.push(action.actor().clone());
-
-        Ok(())
     }
 }
 
