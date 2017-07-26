@@ -25,6 +25,7 @@ use std;
 use std::collections::BinaryHeap;
 use std::cmp::Ordering;
 use std::rc::Weak;
+use std::cell::RefCell;
 
 use world::*;
 use utils::*;
@@ -32,7 +33,10 @@ use actions::*;
 use actions::action::Action;
 
 /// Entry with creature and next action to be commited
-struct ActionEntry(Box<Action>);
+struct ActionEntry {
+    cost: RefCell<u32>,
+    action: Box<Action>
+}
 
 pub(crate) struct Scheduler {
     creatures_without_action: Vec<Weak<CreatureRef>>,
@@ -45,15 +49,25 @@ pub(crate) enum SchedulerError {
     QueueIsEmpty,
 }
 
+impl ActionEntry {
+    fn new(action: Box<Action>) -> ActionEntry {
+        ActionEntry {
+            cost: RefCell::new(action.cost()),
+            action: action,
+        }
+    }
+}
+
+
 impl Ord for ActionEntry {
     fn cmp(&self, other: &ActionEntry) -> Ordering {
-        self.0.cost().cmp(&other.0.cost())
+        self.cost.borrow().cmp(&other.cost.borrow())
     }
 }
 
 impl PartialOrd for ActionEntry {
     fn partial_cmp(&self, other: &ActionEntry) -> Option<Ordering> {
-        Some(self.0.cost().cmp(&other.0.cost()))
+        Some(self.cost.borrow().cmp(&other.cost.borrow()))
     }
 }
 
@@ -61,7 +75,7 @@ impl Eq for ActionEntry {}
 
 impl PartialEq for ActionEntry {
     fn eq(&self, other: &ActionEntry) -> bool {
-        self.0.cost() == other.0.cost()
+        *self.cost.borrow() == *other.cost.borrow()
     }
 }
 
@@ -77,13 +91,14 @@ impl Scheduler {
     /// Adds action to schedulers priority queue
     pub(crate) fn post_action(&mut self, action: Box<Action>) {
         debug_assert!(!self.queue.iter()
-                      .any(|&ActionEntry(ref entry)| identical(entry.actor(), action.actor())));
+                      .any(|&ActionEntry { action: ref entry, .. }|
+                           identical(entry.actor(), action.actor())));
         if let Some(index) = self.creatures_without_action.iter()
             .position(|creature| identical(action.actor(), creature)) {
                 self.creatures_without_action.swap_remove(index);
             }
 
-        self.queue.push(ActionEntry(action));
+        self.queue.push(ActionEntry::new(action));
     }
 
     /// Returns next action scheduled to apply
@@ -99,7 +114,14 @@ impl Scheduler {
         }
 
         return match self.queue.pop() {
-            Some(ActionEntry(action)) => {
+            Some(ActionEntry { action, .. }) => {
+                for entry in self.queue.iter() {
+                    // Note that we do not break the contract with BinaryHeap:
+                    // all the values still preserve the same order
+                    *entry.cost.borrow_mut() -= action.cost();
+                    // TODO: add bonus time when action returned with
+                    // negative action times
+                }
                 self.creatures_without_action.push(action.actor().clone());
                 Ok(action)
             },
