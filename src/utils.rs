@@ -51,6 +51,7 @@ pub(crate) fn identical<T>(first: &Weak<T>, second: &Weak<T>) -> bool {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::rc::Rc;
 
     #[test]
     fn weak_refs_identical() {
