@@ -31,7 +31,6 @@ use utils::*;
 use actions::*;
 use actions::action::*;
 
-use self::SchedulerError::*;
 type Result = std::result::Result<(), SchedulerError>;
 
 /// Entry with creature and next action to be commited
@@ -51,7 +50,7 @@ pub(crate) enum SchedulerError {
 
 impl From<ActionError> for SchedulerError {
     fn from(e: ActionError) -> SchedulerError {
-        ActionError(e)
+        SchedulerError::ActionError(e)
     }
 }
 
@@ -107,12 +106,12 @@ impl Scheduler {
             }
 
         if self.creatures_without_action.len() != 0 {
-            return Err(ActionNotAssigned(self.creatures_without_action[0].clone()))
+            return Err(SchedulerError::ActionNotAssigned(self.creatures_without_action[0].clone()))
         }
 
-        let ActionEntry(action) = self.queue.pop().ok_or(QueueIsEmpty)?;
+        let ActionEntry(action) = self.queue.pop().ok_or(SchedulerError::QueueIsEmpty)?;
         if action.actor().upgrade().is_none() {
-            return Err(ActorIsDead);
+            return Err(SchedulerError::ActorIsDead);
         }
 
         action.apply(world)?; // propagate action error to caller
