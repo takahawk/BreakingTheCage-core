@@ -24,89 +24,74 @@
 use std::rc::Weak;
 
 use utils::*;
-use actions::action;
-use actions::action::*;
 use world::*;
 use map::tiles::*;
+use super::*;
 
-/// Represents atomic motion of a creature on the map
-pub struct Move {
-    creature: Weak<CreatureRef>,
-    direction: Direction,
+pub(super) fn is_move_valid(
+    world: &mut World,
+    creature: &Weak<CreatureRef>,
+    direction: Direction) -> Result {
+    if let Some(creature) = creature.upgrade() {
+        let mut creature = creature.borrow_mut();
+        let Map(ref mut map) = *world.get_level(creature.position().level).borrow_mut();
+        let new_pos = (creature.position() + direction)
+            .ok_or(ActionError::OutOfBounds {
+                position: None,
+                width: map.len(),
+                height: map[0].len(),
+            })?;
+
+        if map.len() <= new_pos.x || map[0].len() <= new_pos.y {
+            return Err(ActionError::OutOfBounds {
+                position: Some(new_pos),
+                width: map.len(),
+                height: map[0].len(),
+            })
+        }
+
+        let ref mut tile = map[new_pos.x][new_pos.y];
+        if let Some(ref creature) = tile.creature {
+            return Err(ActionError::TileIsOccupied(creature.clone())) // weak ref
+        }
+        if !tile.is_passable() {
+            return Err(ActionError::TileIsImpassable(new_pos))
+        }
+
+        Ok(())
+    } else {
+        Err(ActionError::SubjectIsDead)
+    }
 }
 
-impl Move {
-    pub(crate) fn new(creature: Weak<CreatureRef>, direction: Direction) -> Move {
-        Move {
-            creature: creature,
-            direction: direction,
-        }
+
+pub(super) fn move_creature(
+    world: &mut World,
+    creature: &Weak<CreatureRef>,
+    direction: Direction) -> Result {
+    // TODO: change unwraps to customized expect-like function
+    //       saying that all checks must be performed in corresponding
+    //       is_valid_function
+    let creature_ref = creature;
+    is_move_valid(world, creature, direction)?;
+    let mut creature = creature.upgrade().unwrap();
+    let mut creature = creature.borrow_mut();
+    let Map(ref mut map) = *world.get_level(creature.position().level).borrow_mut();
+    let new_pos = (creature.position() + direction).unwrap();
+    map[new_pos.x][new_pos.y].creature = Some(creature_ref.clone());
+    map[creature.position().x][creature.position().y].creature = None;
+    creature.set_position(new_pos);
+    Ok(())
+}
+
+
+pub(super) fn move_cost(creature: &Weak<CreatureRef>, direction: Direction) -> u32 {
+    match creature.upgrade() {
+        Some(_) => 100, // TODO: replace hardcode with more creature-specific calculation
+        None => 0,
     }
 }
 
-impl Action for Move {
-
-    fn apply(&self, world: &mut World) -> action::Result {
-        if let Some(creature) = self.creature.upgrade() {
-            let mut creature = creature.borrow_mut();
-            let Map(ref mut map) = *world.get_level(creature.position().level).borrow_mut();
-            let new_pos = (creature.position() + self.direction)
-                .ok_or(ActionError::OutOfBounds {
-                    position: None,
-                    width: map.len(),
-                    height: map[0].len(),
-                })?;
-
-            if map.len() <= new_pos.x || map[0].len() <= new_pos.y {
-                return Err(ActionError::OutOfBounds {
-                    position: Some(new_pos),
-                    width: map.len(),
-                    height: map[0].len(),
-                })
-            }
-
-
-
-            {
-                // first: set creature as current to new position
-                let ref mut tile = map[new_pos.x][new_pos.y];
-
-                if let Some(ref creature) = tile.creature {
-                    return Err(ActionError::TileIsOccupied(creature.clone())) // weak ref
-                }
-
-                if !tile.is_passable() {
-                    return Err(ActionError::TileIsImpassable(new_pos))
-                }
-                tile.creature = Some(self.creature.clone()); // weak ref
-            }
-
-            {
-                // second: remove creature ref from prev position
-                let ref mut tile = map[creature.position().x][creature.position().y];
-                tile.creature = None;
-            }
-
-            // finally - set new position to creature entity
-            creature.set_position(new_pos);
-
-            Ok(())
-        } else {
-            Err(ActionError::SubjectIsDead)
-        }
-    }
-
-    fn cost(&self) -> u32 {
-        match self.creature.upgrade() {
-            Some(_) => 100, // TODO: replace hardcode with more creature-specific calculation
-            None => 0,
-        }
-    }
-
-    fn actor(&self) -> &Weak<CreatureRef> {
-        &self.creature
-    }
-}
 
 #[cfg(test)]
 mod tests {
@@ -125,8 +110,7 @@ mod tests {
     #[test]
     fn valid_move() {
         let (mut world, character, pos) = setup();
-        let action = Move::new(character.clone(), Direction::Right);
-        action.apply(&mut world).expect("Valid action return error!");
+        move_creature(&mut world, &character, Direction::Right);
         let actual = character.upgrade().map(|a| a.borrow().position()).unwrap();
         let expected = (pos + Direction::Right).unwrap();
         assert_eq!(actual, expected);

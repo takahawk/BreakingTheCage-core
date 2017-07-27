@@ -21,8 +21,63 @@
     OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
     SOFTWARE.
     */
-pub(crate) mod action;
 mod moving;
 
-pub use actions::action::Action;
-pub use actions::moving::Move;
+use std;
+use std::rc::Weak;
+
+use World;
+use utils::*;
+use world::*;
+
+pub type Result = std::result::Result<(), ActionError>;
+
+/// Represents nerror that prevented action to be commited
+#[derive(Debug)]
+pub enum ActionError {
+    /// The [`Creature`] which was supposed to take action is dead (no more reference to it exists
+    /// in the [`World`])
+    SubjectIsDead,
+    /// Out of bounds (of [`Map`]), if position is None - it's not exist at all (for example it is negative
+    /// and can't be represented by usize)
+    OutOfBounds { position: Option<Position>, width: usize, height: usize},
+    /// [`Tile`] is occupied by some [`Creature`]
+    TileIsOccupied(Weak<CreatureRef>),
+    /// [`Tile`] is impassable by it's nature
+    TileIsImpassable(Position),
+}
+
+pub enum Action {
+    Move(Weak<CreatureRef>, Direction)
+}
+
+/// Abstracts the action to be commited in the [`World`]
+impl Action {
+    pub(crate) fn apply(&self, world: &mut World) -> Result {
+        match *self {
+            Action::Move(ref creature, direction) =>
+                moving::move_creature(world, creature, direction)
+        }
+    }
+
+    /// Cost of action in time-points, used for scheduling (
+    pub(crate) fn cost(&self) -> u32 {
+        match *self {
+            Action::Move(ref creature, direction) =>
+                moving::move_cost(creature, direction)
+        }
+    }
+
+    pub(crate) fn is_valid(&self, world: &mut World) -> Result {
+        match *self {
+            Action::Move(ref creature, direction) =>
+                moving::is_move_valid(world, creature, direction)
+        }
+    }
+
+    pub fn actor(&self) -> &Weak<CreatureRef> {
+        match *self {
+            Action::Move(ref creature, _) => creature
+        }
+    }
+}

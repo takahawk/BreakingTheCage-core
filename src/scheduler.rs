@@ -29,13 +29,12 @@ use std::cell::RefCell;
 
 use world::*;
 use utils::*;
-use actions::*;
-use actions::action::Action;
+use actions::Action;
 
 /// Entry with creature and next action to be commited
 struct ActionEntry {
     cost: RefCell<u32>,
-    action: Box<Action>
+    action: Action,
 }
 
 pub(crate) struct Scheduler {
@@ -50,7 +49,7 @@ pub(crate) enum SchedulerError {
 }
 
 impl ActionEntry {
-    fn new(action: Box<Action>) -> ActionEntry {
+    fn new(action: Action) -> ActionEntry {
         ActionEntry {
             cost: RefCell::new(action.cost()),
             action: action,
@@ -89,7 +88,7 @@ impl Scheduler {
     }
 
     /// Adds action to schedulers priority queue
-    pub(crate) fn post_action(&mut self, action: Box<Action>) {
+    pub(crate) fn post_action(&mut self, action: Action) {
         debug_assert!(!self.queue.iter()
                       .any(|&ActionEntry { action: ref entry, .. }|
                            identical(entry.actor(), action.actor())));
@@ -102,7 +101,7 @@ impl Scheduler {
     }
 
     /// Returns next action scheduled to apply
-    pub(crate) fn pop_next_action(&mut self) -> Result<Box<Action>, SchedulerError> {
+    pub(crate) fn pop_next_action(&mut self) -> Result<Action, SchedulerError> {
         while self.creatures_without_action.last()
             .map(|rf| rf.upgrade().is_none())
             .unwrap_or(false) {
@@ -122,6 +121,8 @@ impl Scheduler {
                     // TODO: add bonus time when action returned with
                     // negative action times
                 }
+
+
                 self.creatures_without_action.push(action.actor().clone());
                 Ok(action)
             },
@@ -134,24 +135,6 @@ impl Scheduler {
 mod tests {
     use super::*;
 
-    struct MockAction {
-        actor: Weak<CreatureRef>,
-        cost: u32,
-    }
-
-    impl Action for MockAction {
-        fn apply(&self, world: &mut World) -> action::Result {
-            Ok(())
-        }
-
-        fn cost(&self) -> u32 {
-            self.cost
-        }
-
-        fn actor(&self) -> &Weak<CreatureRef> {
-            &self.actor
-        }
-    }
 }
 
 
