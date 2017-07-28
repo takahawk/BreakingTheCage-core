@@ -100,8 +100,7 @@ impl Scheduler {
         self.queue.push(ActionEntry::new(action));
     }
 
-    /// Returns next action scheduled to apply
-    pub(crate) fn pop_next_action(&mut self) -> Result<Action, SchedulerError> {
+    pub(crate) fn peek_next(&mut self) -> Result<&Action, SchedulerError> {
         while self.creatures_without_action.last()
             .map(|rf| rf.upgrade().is_none())
             .unwrap_or(false) {
@@ -112,22 +111,25 @@ impl Scheduler {
             return Err(SchedulerError::ActionNotAssigned(self.creatures_without_action[0].clone()))
         }
 
-        return match self.queue.pop() {
-            Some(ActionEntry { action, .. }) => {
-                for entry in self.queue.iter() {
-                    // Note that we do not break the contract with BinaryHeap:
-                    // all the values still preserve the same order
-                    *entry.cost.borrow_mut() -= action.cost();
-                    // TODO: add bonus time when action returned with
-                    // negative action times
-                }
-
-
-                self.creatures_without_action.push(action.actor().clone());
-                Ok(action)
-            },
+        match self.queue.peek() {
+            Some(&ActionEntry { ref action, .. }) => Ok(action),
             None => Err(SchedulerError::QueueIsEmpty),
         }
+        
+    }
+
+    /// Returns next action scheduled to apply
+    pub(crate) fn pop_next(&mut self) -> Result<Action, SchedulerError> {
+        self.peek_next()?; // all errors must be handled in peek_next()
+        let ActionEntry { action, .. } = self.queue.pop().unwrap();
+
+        for entry in self.queue.iter() {
+            *entry.cost.borrow_mut() -= action.cost();
+            // TODO: add bonus time when action returned with
+            // negative action times
+            
+        }
+        Ok(action)
     }
 }
 
@@ -136,8 +138,3 @@ mod tests {
     use super::*;
 
 }
-
-
-
-
-
