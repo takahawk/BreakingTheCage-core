@@ -44,7 +44,6 @@ pub(crate) struct Scheduler {
 
 pub(crate) enum SchedulerError {
     ActionNotAssigned(Weak<CreatureRef>),
-    ActorIsDead,
     QueueIsEmpty,
 }
 
