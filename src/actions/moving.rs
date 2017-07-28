@@ -29,12 +29,12 @@ use map::tiles::*;
 use super::*;
 
 pub(super) fn is_move_valid(
-    world: &mut World,
+    world: &World,
     creature: &Weak<CreatureRef>,
     direction: Direction) -> Result {
     if let Some(creature) = creature.upgrade() {
-        let mut creature = creature.borrow_mut();
-        let Map(ref mut map) = *world.get_level(creature.position().level).borrow_mut();
+        let creature = creature.borrow();
+        let Map(ref map) = *world.get_level(creature.position().level).borrow_mut();
         let new_pos = (creature.position() + direction)
             .ok_or(ActionError::OutOfBounds {
                 position: None,
@@ -50,7 +50,7 @@ pub(super) fn is_move_valid(
             })
         }
 
-        let ref mut tile = map[new_pos.x][new_pos.y];
+        let ref tile = map[new_pos.x][new_pos.y];
         if let Some(ref creature) = tile.creature {
             return Err(ActionError::TileIsOccupied(creature.clone())) // weak ref
         }

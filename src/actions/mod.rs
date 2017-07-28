@@ -68,7 +68,7 @@ impl Action {
         }
     }
 
-    pub(crate) fn is_valid(&self, world: &mut World) -> Result {
+    pub(crate) fn is_valid(&self, world: &World) -> Result {
         match *self {
             Action::Move(ref creature, direction) =>
                 moving::is_move_valid(world, creature, direction)
