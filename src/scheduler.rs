@@ -144,5 +144,31 @@ impl Scheduler {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use creatures::Creature;
+    use actions::Action::MockAction;
+    use std::rc::Rc;
 
+    fn mock_creature(name: &str) -> Rc<CreatureRef> {
+        Rc::new(
+            RefCell::new(
+                Creature::demon(
+                    String::from(name), 10, 10, Position { x: 10, y: 10, level: 0 }, 10)))
+    }
+
+    fn creatures_setup() -> Vec<Rc<CreatureRef>> {
+        vec![
+            mock_creature("Abaddon"),
+            mock_creature("Asmodeus"),
+            mock_creature("Baal"),
+            mock_creature("Baphomet")
+        ]
+    }
+
+    // #[test]
+    // fn sequential_actions() {
+    //     let creatures = creatures_setup();
+    //     let scheduler = Scheduler::new();
+    //     scheduler.post_action(MockAction(Rc::downgrade(creatures[0])), 1);
+    //     scheduler.post_action(MockAction(Rc::downgrade(creatures[1])), 2);
+    // }
 }
