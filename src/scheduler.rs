@@ -37,8 +37,13 @@ struct ActionEntry {
     action: Action,
 }
 
+struct UnassignedEntry {
+    creature: Weak<CreatureRef>,
+    bonus_time: u32,
+}
+
 pub(crate) struct Scheduler {
-    creatures_without_action: Vec<Weak<CreatureRef>>,
+    unassigned: Vec<UnassignedEntry>,
     queue: BinaryHeap<ActionEntry>,
 }
 
@@ -48,9 +53,9 @@ pub(crate) enum SchedulerError {
 }
 
 impl ActionEntry {
-    fn new(action: Action) -> ActionEntry {
+    fn new(action: Action, cost: u32) -> ActionEntry {
         ActionEntry {
-            cost: RefCell::new(action.cost()),
+            cost: RefCell::new(cost),
             action: action,
         }
     }
@@ -81,7 +86,7 @@ impl Scheduler {
 
     pub(crate) fn new() -> Scheduler {
         Scheduler {
-            creatures_without_action: vec![],
+            unassigned: vec![],
             queue: BinaryHeap::new(),
         }
     }
@@ -91,23 +96,27 @@ impl Scheduler {
         debug_assert!(!self.queue.iter()
                       .any(|&ActionEntry { action: ref entry, .. }|
                            identical(entry.actor(), action.actor())));
-        if let Some(index) = self.creatures_without_action.iter()
-            .position(|creature| identical(action.actor(), creature)) {
-                self.creatures_without_action.swap_remove(index);
+        let mut cost = action.cost();
+        if let Some(index) = self.unassigned.iter()
+            .position(|&UnassignedEntry { ref creature, .. }|
+                          identical(action.actor(), creature)) {
+                let entry = self.unassigned.swap_remove(index);
+                cost -= entry.bonus_time;
             }
 
-        self.queue.push(ActionEntry::new(action));
+        self.queue.push(ActionEntry::new(action, cost));
     }
 
     pub(crate) fn peek_next(&mut self) -> Result<&Action, SchedulerError> {
-        while self.creatures_without_action.last()
-            .map(|rf| rf.upgrade().is_none())
+        while self.unassigned.last()
+            .map(|&UnassignedEntry { ref creature, .. }| creature.upgrade().is_none())
             .unwrap_or(false) {
-                self.creatures_without_action.pop();
+                self.unassigned.pop();
             }
 
-        if self.creatures_without_action.len() != 0 {
-            return Err(SchedulerError::ActionNotAssigned(self.creatures_without_action[0].clone()))
+        if self.unassigned.len() != 0 {
+            return Err(SchedulerError::ActionNotAssigned(
+                self.unassigned[0].creature.clone()))
         }
 
         match self.queue.peek() {
