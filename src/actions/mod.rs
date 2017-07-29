@@ -48,7 +48,9 @@ pub enum ActionError {
 }
 
 pub enum Action {
-    Move(Weak<CreatureRef>, Direction)
+    Move(Weak<CreatureRef>, Direction),
+    #[cfg(test)]
+    MockAction(Weak<CreatureRef>, u32),
 }
 
 /// Abstracts the action to be commited in the [`World`]
@@ -56,7 +58,9 @@ impl Action {
     pub(crate) fn apply(&self, world: &mut World) -> Result {
         match *self {
             Action::Move(ref creature, direction) =>
-                moving::move_creature(world, creature, direction)
+                moving::move_creature(world, creature, direction),
+           #[cfg(test)]
+            Action::MockAction(_, _) => Ok(()),
         }
     }
 
@@ -64,20 +68,27 @@ impl Action {
     pub(crate) fn cost(&self) -> u32 {
         match *self {
             Action::Move(ref creature, direction) =>
-                moving::move_cost(creature, direction)
+                moving::move_cost(creature, direction),
+            #[cfg(test)]
+            Action::MockAction(_, cost) => cost,
         }
     }
 
     pub(crate) fn is_valid(&self, world: &World) -> Result {
         match *self {
             Action::Move(ref creature, direction) =>
-                moving::is_move_valid(world, creature, direction)
+                moving::is_move_valid(world, creature, direction),
+            #[cfg(test)]
+            Action::MockAction(_, _) => Ok(()),
+
         }
     }
 
     pub fn actor(&self) -> &Weak<CreatureRef> {
         match *self {
-            Action::Move(ref creature, _) => creature
+            Action::Move(ref creature, _) => creature,
+            #[cfg(test)]
+            Action::MockAction(ref creature, _) => creature,
         }
     }
 }
