@@ -72,6 +72,10 @@ impl Creature {
         self.position
     }
 
+    pub fn name(&self) -> &String {
+        &self.name
+    }
+
     pub(crate) fn set_position(&mut self, position: Position) {
         self.position = position
     }

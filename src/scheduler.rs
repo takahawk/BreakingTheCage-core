@@ -33,7 +33,7 @@ use actions::Action;
 
 /// Entry with creature and next action to be commited
 struct ActionEntry {
-    cost: RefCell<u32>,
+    cost: RefCell<i32>,
     action: Action,
 }
 
@@ -55,7 +55,7 @@ pub(crate) enum SchedulerError {
 impl ActionEntry {
     fn new(action: Action, cost: u32) -> ActionEntry {
         ActionEntry {
-            cost: RefCell::new(cost),
+            cost: RefCell::new(cost as i32),
             action: action,
         }
     }
@@ -64,13 +64,13 @@ impl ActionEntry {
 
 impl Ord for ActionEntry {
     fn cmp(&self, other: &ActionEntry) -> Ordering {
-        self.cost.borrow().cmp(&other.cost.borrow())
+        other.cost.borrow().cmp(&self.cost.borrow())
     }
 }
 
 impl PartialOrd for ActionEntry {
     fn partial_cmp(&self, other: &ActionEntry) -> Option<Ordering> {
-        Some(self.cost.borrow().cmp(&other.cost.borrow()))
+        Some(other.cost.borrow().cmp(&self.cost.borrow()))
     }
 }
 
@@ -132,7 +132,7 @@ impl Scheduler {
         let ActionEntry { action, .. } = self.queue.pop().unwrap();
 
         for entry in self.queue.iter() {
-            *entry.cost.borrow_mut() -= action.cost();
+            *entry.cost.borrow_mut() -= action.cost() as i32;
             // TODO: add bonus time when action returned with
             // negative action times
             
@@ -164,11 +164,37 @@ mod tests {
         ]
     }
 
-    // #[test]
-    // fn sequential_actions() {
-    //     let creatures = creatures_setup();
-    //     let scheduler = Scheduler::new();
-    //     scheduler.post_action(MockAction(Rc::downgrade(creatures[0])), 1);
-    //     scheduler.post_action(MockAction(Rc::downgrade(creatures[1])), 2);
-    // }
+    #[test]
+    fn sequential_actions() {
+        let creatures = creatures_setup();
+        let mut scheduler = Scheduler::new();
+        scheduler.post_action(MockAction(Rc::downgrade(&creatures[0]), 1));
+        scheduler.post_action(MockAction(Rc::downgrade(&creatures[1]), 2));
+        scheduler.post_action(MockAction(Rc::downgrade(&creatures[2]), 3));
+
+        let expected: Vec<_> = creatures.iter()
+            .take(3)
+            .map(|actor| {
+                let actor = actor.borrow();
+                actor.name().to_owned()  
+            })
+            .collect();
+        let mut result = vec![];
+        loop {
+            match scheduler.pop_next() {
+                Ok(action) => {
+                    let actor = action.actor().upgrade().unwrap();
+                    result.push(actor.borrow().name().to_owned());
+                },
+                Err(SchedulerError::ActionNotAssigned(creature)) =>
+                    scheduler.post_action(MockAction(creature, 5)),
+                Err(SchedulerError::QueueIsEmpty) => break,
+            }
+        }
+        assert_eq!(result,
+                   expected,
+                   "Actions nots equential:\n\tActual: {:?}\n\tExpected (must be {:?})",
+                   result,
+                   expected);
+    }
 }
