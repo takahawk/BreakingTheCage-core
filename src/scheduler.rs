@@ -129,14 +129,24 @@ impl Scheduler {
     /// Returns next action scheduled to apply
     pub(crate) fn pop_next(&mut self) -> Result<Action, SchedulerError> {
         self.peek_next()?; // all errors must be handled in peek_next()
-        let ActionEntry { action, .. } = self.queue.pop().unwrap();
+        let ActionEntry { action, cost } = self.queue.pop().unwrap();
 
-        for entry in self.queue.iter() {
-            *entry.cost.borrow_mut() -= action.cost() as i32;
-            // TODO: add bonus time when action returned with
-            // negative action times
-            
-        }
+        let cost = *cost.borrow();
+        let bonus_time = if cost > 0 {
+            for entry in self.queue.iter() {
+                *entry.cost.borrow_mut() -= cost as i32;
+                // TODO: add bonus time when action returned with
+                // negative action times
+            }
+            0
+        } else {
+            -cost
+        } as u32;
+        self.unassigned.push(
+            UnassignedEntry {
+                creature: action.actor().clone(),
+                bonus_time: bonus_time,
+            });
         Ok(action)
     }
 }
@@ -196,5 +206,16 @@ mod tests {
                    "Actions nots equential:\n\tActual: {:?}\n\tExpected (must be {:?})",
                    result,
                    expected);
+    }
+
+    #[test]
+    fn non_assigned() {
+        let creatures = creatures_setup();
+        let mut scheduler = Scheduler::new();
+        scheduler.post_action(MockAction(Rc::downgrade(&creatures[0]), 1));
+        scheduler.post_action(MockAction(Rc::downgrade(&creatures[1]), 2));
+        scheduler.post_action(MockAction(Rc::downgrade(&creatures[2]), 3));
+        scheduler.pop_next();
+        assert!(scheduler.pop_next().is_err());
     }
 }
