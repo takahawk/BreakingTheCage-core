@@ -61,6 +61,22 @@ impl<T> Identical<Weak<T>> for Weak<T> {
     }
 }
 
+impl<T> Identical<Weak<T>> for Rc<T> {
+    fn identical(&self, other: &Weak<T>) -> bool {
+        if let Some(other) = other.upgrade() {
+            self.identical(&other)
+        } else {
+            false
+        }
+    }
+}
+
+impl<T> Identical<Rc<T>> for Weak<T> {
+    fn identical(&self, other: &Rc<T>) -> bool {
+        other.identical(self)
+    }
+}
+
 
 #[cfg(test)]
 mod tests {
