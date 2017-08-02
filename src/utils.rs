@@ -1,5 +1,5 @@
 use std::ops::Add;
-use std::rc::Weak;
+use std::rc::{Rc,Weak};
 
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub struct Position {
@@ -43,18 +43,22 @@ pub(crate) trait Identical<T> {
     fn identical(&self, other: &T) -> bool;
 }
 
+impl<T> Identical<Rc<T>> for Rc<T> {
+    fn identical(&self, other: &Rc<T>) -> bool {
+        self.as_ref() as *const _ == other.as_ref() as *const _
+    }
+}
+
 impl<T> Identical<Weak<T>> for Weak<T> {
-    
     /// Returns true if weak references points to the same data
     /// and false if not or either points to already deallocated data
     fn identical(&self, other: &Weak<T>) -> bool {
         if let (Some(first), Some(second)) = (self.upgrade(), other.upgrade()) {
-            (first.as_ref() as *const _) == (second.as_ref() as *const _)
+            first.identical(&second)
         } else {
             false
         }
     }
-    
 }
 
 
