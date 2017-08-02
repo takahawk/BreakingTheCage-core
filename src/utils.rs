@@ -38,15 +38,25 @@ impl Add<Direction> for Position {
 
 }
 
-/// Returns true if weak references points to the same data
-/// and false if not or either points to already deallocated data
-pub(crate) fn identical<T>(first: &Weak<T>, second: &Weak<T>) -> bool {
-    if let (Some(first), Some(second)) = (first.upgrade(), second.upgrade()) {
-        (first.as_ref() as *const _) == (second.as_ref() as *const _)
-    } else {
-        false
-    }
+
+pub(crate) trait Identical<T> {
+    fn identical(&self, other: &T) -> bool;
 }
+
+impl<T> Identical<Weak<T>> for Weak<T> {
+    
+    /// Returns true if weak references points to the same data
+    /// and false if not or either points to already deallocated data
+    fn identical(&self, other: &Weak<T>) -> bool {
+        if let (Some(first), Some(second)) = (self.upgrade(), other.upgrade()) {
+            (first.as_ref() as *const _) == (second.as_ref() as *const _)
+        } else {
+            false
+        }
+    }
+    
+}
+
 
 #[cfg(test)]
 mod tests {
@@ -58,7 +68,7 @@ mod tests {
         let a = Rc::new(5);
         let ref1 = Rc::downgrade(&a);
         let ref2 = Rc::downgrade(&a);
-        assert!(identical(&ref1, &ref2));
+        assert!(ref1.identical(&ref2));
     }
 
     #[test]
@@ -67,7 +77,7 @@ mod tests {
         let b = Rc::new(5);
         let ref1 = Rc::downgrade(&a);
         let ref2 = Rc::downgrade(&b);
-        assert!(!identical(&ref1, &ref2));
+        assert!(!ref1.identical(&ref2));
     }
 
     #[test]
@@ -76,7 +86,7 @@ mod tests {
         let ref1 = Rc::downgrade(&a);
         let ref2 = Rc::downgrade(&a);
         drop(a);
-        assert!(!identical(&ref1, &ref2));
+        assert!(!ref1.identical(&ref2));
     }
 }
 

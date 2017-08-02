@@ -95,11 +95,11 @@ impl Scheduler {
     pub(crate) fn post_action(&mut self, action: Action) {
         debug_assert!(!self.queue.iter()
                       .any(|&ActionEntry { action: ref entry, .. }|
-                           identical(entry.actor(), action.actor())));
+                           entry.actor().identical(action.actor())));
         let mut cost = action.cost();
         if let Some(index) = self.unassigned.iter()
             .position(|&UnassignedEntry { ref creature, .. }|
-                          identical(action.actor(), creature)) {
+                          action.actor().identical(creature)) {
                 let entry = self.unassigned.swap_remove(index);
                 cost -= entry.bonus_time;
             }
